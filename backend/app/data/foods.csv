@@ -1,0 +1,54 @@
+food_name,calories,protein,carbs,fats,diet_type,meal_type
+Grilled Chicken Breast,165,31,0,3.6,high_protein,lunch
+Greek Yogurt,120,15,8,3,high_protein,breakfast
+Oatmeal with Banana,250,8,45,4,balanced,breakfast
+Tofu Stir Fry,220,18,14,10,vegan,lunch
+Lentil Bowl,300,20,40,6,vegetarian,dinner
+Egg Omelette,210,18,2,14,balanced,breakfast
+Protein Smoothie,280,30,20,6,high_protein,snack
+Chickpea Salad,240,12,30,8,vegan,lunch
+Salmon with Rice,420,32,35,16,balanced,dinner
+Cottage Cheese Bowl,180,20,10,5,vegetarian,snack
+Scrambled Eggs with Toast,320,22,24,14,balanced,breakfast
+Turkey Sandwich,350,28,30,10,high_protein,lunch
+Chicken Rice Bowl,450,38,42,12,high_protein,dinner
+Tuna Salad,280,30,8,12,high_protein,lunch
+Beef Stir Fry,500,35,30,20,balanced,dinner
+Overnight Oats,290,14,40,8,vegetarian,breakfast
+Peanut Butter Toast,260,10,22,14,vegetarian,breakfast
+Avocado Toast,300,8,28,18,vegan,breakfast
+Quinoa Veggie Bowl,340,14,42,10,vegan,lunch
+Tempeh Bowl,390,24,32,14,vegan,dinner
+Black Bean Burrito Bowl,410,18,55,11,vegan,lunch
+Paneer Rice Bowl,430,24,36,18,vegetarian,dinner
+Fruit Yogurt Parfait,220,14,28,6,vegetarian,breakfast
+Protein Pancakes,360,28,30,10,high_protein,breakfast
+Chicken Wrap,390,32,34,11,high_protein,lunch
+Shrimp Rice Bowl,410,30,38,12,balanced,dinner
+Hard-Boiled Eggs and Fruit,210,14,18,9,balanced,snack
+Hummus Veggie Wrap,330,12,36,14,vegan,lunch
+Edamame Snack Bowl,190,17,14,7,vegan,snack
+Tofu Scramble,260,20,10,14,vegan,breakfast
+Vegan Protein Smoothie,300,25,24,9,vegan,snack
+Chicken Pasta,520,34,48,16,balanced,dinner
+Ground Beef Rice Bowl,530,36,40,19,high_protein,dinner
+Greek Yogurt with Berries,170,17,18,3,high_protein,snack
+Cottage Cheese Toast,240,18,20,8,vegetarian,breakfast
+Lentil Soup,260,16,32,6,vegan,dinner
+Falafel Bowl,380,15,44,14,vegan,lunch
+Egg Fried Rice,430,19,45,17,balanced,lunch
+Baked Salmon with Potato,490,35,34,20,balanced,dinner
+Chicken Caesar Salad,350,30,12,18,high_protein,lunch
+Tofu Peanut Noodles,440,22,48,16,vegan,dinner
+Veggie Omelette,240,17,6,15,vegetarian,breakfast
+High Protein Oats,310,24,32,7,high_protein,breakfast
+Rice and Beans Bowl,360,14,58,6,vegan,dinner
+Steak and Sweet Potato,540,38,30,22,high_protein,dinner
+Pasta with Tuna,470,32,46,12,high_protein,lunch
+Yogurt Granola Bowl,290,13,35,9,balanced,breakfast
+Protein Bar and Banana,250,20,30,6,high_protein,snack
+Tofu Curry with Rice,460,20,50,14,vegan,dinner
+Paneer Wrap,410,22,34,16,vegetarian,lunch
+Veggie Quinoa Salad,320,12,38,9,vegan,lunch
+Chicken and Sweet Potato,430,35,32,11,high_protein,dinner
+Boiled Eggs and Oats,340,22,28,12,balanced,breakfast

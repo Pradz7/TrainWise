@@ -1,0 +1,65 @@
+exercise_name,muscle_group,equipment,difficulty,goal,instructions
+Push Up,chest,bodyweight,beginner,fat_loss,3 sets of 10 to 15 reps
+Incline Push Up,chest,bodyweight,beginner,maintenance,3 sets of 12 reps
+Wide Push Up,chest,bodyweight,intermediate,muscle_gain,4 sets of 10 reps
+Dumbbell Bench Press,chest,dumbbells,intermediate,muscle_gain,4 sets of 8 to 12 reps
+Incline Dumbbell Press,chest,dumbbells,intermediate,muscle_gain,4 sets of 8 to 12 reps
+Dumbbell Fly,chest,dumbbells,beginner,maintenance,3 sets of 10 to 12 reps
+Barbell Bench Press,chest,full_gym,intermediate,muscle_gain,4 sets of 6 to 10 reps
+Incline Barbell Bench Press,chest,full_gym,intermediate,muscle_gain,4 sets of 8 reps
+Cable Chest Fly,chest,full_gym,beginner,maintenance,3 sets of 12 reps
+
+Bent Over Row,back,dumbbells,intermediate,muscle_gain,4 sets of 8 to 12 reps
+One Arm Dumbbell Row,back,dumbbells,beginner,maintenance,3 sets of 10 to 12 reps
+Reverse Fly,back,dumbbells,beginner,fat_loss,3 sets of 12 reps
+Pull Up,back,bodyweight,intermediate,maintenance,3 sets to near failure
+Superman Hold,back,bodyweight,beginner,fat_loss,3 sets of 30 seconds
+Inverted Row,back,bodyweight,intermediate,muscle_gain,3 sets of 8 to 10 reps
+Lat Pulldown,back,full_gym,beginner,maintenance,3 sets of 10 to 12 reps
+Seated Cable Row,back,full_gym,beginner,muscle_gain,3 sets of 10 to 12 reps
+Barbell Row,back,full_gym,intermediate,muscle_gain,4 sets of 6 to 10 reps
+
+Bodyweight Squat,legs,bodyweight,beginner,fat_loss,4 sets of 15 reps
+Walking Lunge,legs,bodyweight,beginner,maintenance,3 sets of 12 reps each leg
+Glute Bridge,legs,bodyweight,beginner,maintenance,3 sets of 15 reps
+Jump Squat,legs,bodyweight,intermediate,fat_loss,3 sets of 12 reps
+Goblet Squat,legs,dumbbells,beginner,muscle_gain,4 sets of 10 reps
+Dumbbell Romanian Deadlift,legs,dumbbells,intermediate,muscle_gain,4 sets of 10 reps
+Dumbbell Lunge,legs,dumbbells,beginner,maintenance,3 sets of 10 reps each leg
+Bulgarian Split Squat,legs,dumbbells,intermediate,muscle_gain,3 sets of 8 to 10 reps each leg
+Barbell Back Squat,legs,full_gym,intermediate,muscle_gain,4 sets of 6 to 8 reps
+Leg Press,legs,full_gym,beginner,muscle_gain,3 sets of 10 to 12 reps
+Romanian Deadlift,legs,full_gym,intermediate,muscle_gain,4 sets of 8 reps
+Leg Curl,legs,full_gym,beginner,maintenance,3 sets of 12 reps
+
+Pike Push Up,shoulders,bodyweight,beginner,maintenance,3 sets of 8 to 12 reps
+Handstand Hold,shoulders,bodyweight,intermediate,muscle_gain,3 sets of 20 to 30 seconds
+Dumbbell Shoulder Press,shoulders,dumbbells,beginner,muscle_gain,4 sets of 8 to 12 reps
+Dumbbell Lateral Raise,shoulders,dumbbells,beginner,maintenance,3 sets of 12 to 15 reps
+Dumbbell Front Raise,shoulders,dumbbells,beginner,fat_loss,3 sets of 12 reps
+Arnold Press,shoulders,dumbbells,intermediate,muscle_gain,3 sets of 10 reps
+Barbell Overhead Press,shoulders,full_gym,intermediate,muscle_gain,4 sets of 6 to 8 reps
+Cable Lateral Raise,shoulders,full_gym,beginner,maintenance,3 sets of 12 reps
+Face Pull,shoulders,full_gym,beginner,maintenance,3 sets of 15 reps
+
+Bicep Curl,arms,dumbbells,beginner,muscle_gain,3 sets of 10 to 12 reps
+Hammer Curl,arms,dumbbells,beginner,muscle_gain,3 sets of 10 to 12 reps
+Overhead Dumbbell Tricep Extension,arms,dumbbells,beginner,maintenance,3 sets of 12 reps
+Dumbbell Kickback,arms,dumbbells,beginner,fat_loss,3 sets of 12 reps
+Tricep Dips,arms,bodyweight,beginner,fat_loss,3 sets of 10 to 15 reps
+Diamond Push Up,arms,bodyweight,intermediate,muscle_gain,3 sets of 8 to 12 reps
+Bench Dips,arms,bodyweight,beginner,maintenance,3 sets of 12 reps
+Cable Tricep Pushdown,arms,full_gym,beginner,maintenance,3 sets of 12 reps
+EZ Bar Curl,arms,full_gym,beginner,muscle_gain,3 sets of 10 reps
+Preacher Curl,arms,full_gym,intermediate,muscle_gain,3 sets of 10 reps
+
+Plank,core,bodyweight,beginner,maintenance,3 sets of 30 to 60 sec
+Russian Twist,core,bodyweight,beginner,fat_loss,3 sets of 20 reps
+Bicycle Crunch,core,bodyweight,beginner,fat_loss,3 sets of 20 reps
+Mountain Climbers,core,bodyweight,beginner,fat_loss,3 sets of 30 seconds
+Leg Raise,core,bodyweight,beginner,maintenance,3 sets of 12 reps
+Dead Bug,core,bodyweight,beginner,maintenance,3 sets of 12 reps each side
+Weighted Russian Twist,core,dumbbells,beginner,muscle_gain,3 sets of 20 reps
+Dumbbell Side Bend,core,dumbbells,beginner,maintenance,3 sets of 15 reps each side
+Hanging Leg Raise,core,full_gym,intermediate,muscle_gain,3 sets of 10 to 12 reps
+Cable Crunch,core,full_gym,beginner,maintenance,3 sets of 15 reps
