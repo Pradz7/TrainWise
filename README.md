@@ -28,3 +28,14 @@ TrainWise is an AI-powered fitness and nutrition coach that helps users generate
 
 ### AI
 - Gemini API with fallback handling
+
+## Screenshots
+
+### Profile
+![Profile](screenshots/profile.png)
+
+### Plans
+![Plans](screenshots/plans.png)
+
+### Chat
+![Chat](screenshots/chat.png)
