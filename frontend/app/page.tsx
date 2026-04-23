@@ -22,14 +22,12 @@ const defaultProfile: UserProfile = {
   training_days: 3,
 };
 
-function getInitialProfile(): UserProfile {
+function loadProfile(): UserProfile {
   if (typeof window === "undefined") return defaultProfile;
 
   try {
     const savedProfile = localStorage.getItem("trainwise_profile");
-    if (!savedProfile) return defaultProfile;
-
-    return JSON.parse(savedProfile) as UserProfile;
+    return savedProfile ? (JSON.parse(savedProfile) as UserProfile) : defaultProfile;
   } catch {
     localStorage.removeItem("trainwise_profile");
     return defaultProfile;
@@ -37,7 +35,8 @@ function getInitialProfile(): UserProfile {
 }
 
 export default function HomePage() {
-  const [profile, setProfile] = useState<UserProfile>(getInitialProfile);
+  const [mounted, setMounted] = useState(false);
+  const [profile, setProfile] = useState<UserProfile>(defaultProfile);
   const [nutritionPlan, setNutritionPlan] = useState<NutritionPlan | null>(null);
   const [workoutPlan, setWorkoutPlan] = useState<WorkoutPlan | null>(null);
   const [nutritionError, setNutritionError] = useState("");
@@ -48,16 +47,19 @@ export default function HomePage() {
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    setProfile(loadProfile());
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     localStorage.setItem("trainwise_profile", JSON.stringify(profile));
-  }, [profile]);
+  }, [profile, mounted]);
 
   const triggerToast = (message: string) => {
     setToastMessage(message);
     setShowToast(true);
-
-    setTimeout(() => {
-      setShowToast(false);
-    }, 2500);
+    window.setTimeout(() => setShowToast(false), 2500);
   };
 
   const resetProfile = () => {
@@ -72,15 +74,9 @@ export default function HomePage() {
   const validateProfile = (data: UserProfile) => {
     if (!data.name.trim()) return "Name is required.";
     if (data.age < 13 || data.age > 80) return "Age must be between 13 and 80.";
-    if (data.weight_kg <= 20 || data.weight_kg > 300) {
-      return "Weight must be between 20 and 300 kg.";
-    }
-    if (data.height_cm <= 100 || data.height_cm > 250) {
-      return "Height must be between 100 and 250 cm.";
-    }
-    if (data.training_days < 2 || data.training_days > 7) {
-      return "Training days must be between 2 and 7.";
-    }
+    if (data.weight_kg <= 20 || data.weight_kg > 300) return "Weight must be between 20 and 300 kg.";
+    if (data.height_cm <= 100 || data.height_cm > 250) return "Height must be between 100 and 250 cm.";
+    if (data.training_days < 2 || data.training_days > 7) return "Training days must be between 2 and 7.";
     return "";
   };
 
@@ -97,9 +93,7 @@ export default function HomePage() {
     try {
       const res = await fetch("http://127.0.0.1:8000/nutrition/plan", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profile),
       });
 
@@ -135,9 +129,7 @@ export default function HomePage() {
     try {
       const res = await fetch("http://127.0.0.1:8000/workout/plan", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profile),
       });
 
@@ -161,11 +153,12 @@ export default function HomePage() {
   };
 
   const shouldShowStats =
+    mounted &&
     profile.name.trim() !== "" &&
     !(profile.age === 18 && profile.weight_kg === 50 && profile.height_cm === 170);
 
   return (
-    <main className="min-h-screen px-4 py-6 md:px-6 md:py-8">
+    <main className="min-h-screen px-4 py-6 md:px-6 md:py-8" suppressHydrationWarning>
       <Toast message={toastMessage} show={showToast} />
 
       <div className="mx-auto max-w-6xl space-y-8">
