@@ -6,7 +6,11 @@ app = FastAPI(title="TrainWise API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://172.20.10.9:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -16,6 +20,7 @@ app.include_router(profile.router, prefix="/profile", tags=["Profile"])
 app.include_router(nutrition.router, prefix="/nutrition", tags=["Nutrition"])
 app.include_router(workout.router, prefix="/workout", tags=["Workout"])
 app.include_router(chat.router, prefix="/chat", tags=["Chat"])
+
 
 @app.get("/")
 def root():
