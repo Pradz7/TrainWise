@@ -89,3 +89,16 @@ button:active {
   border-color: rgb(59 130 246);
   box-shadow: 0 0 0 2px rgb(59 130 246 / 0.25);
 }
+
+.input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(203, 213, 225);
+  padding: 0.75rem 1rem;
+  outline: none;
+}
+
+.input:focus {
+  border-color: rgb(59, 130, 246);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
