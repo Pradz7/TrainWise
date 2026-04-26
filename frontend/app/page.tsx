@@ -1,222 +1,80 @@
-"use client";
+import Link from "next/link";
 
-import { useEffect, useState } from "react";
-import ProfileForm from "@/components/ProfileForm";
-import NutritionCard from "@/components/NutritionCard";
-import WorkoutCard from "@/components/WorkoutCard";
-import ChatBox from "@/components/ChatBox";
-import StatsCard from "@/components/StatsCard";
-import Toast from "@/components/Toast";
-import { NutritionPlan, UserProfile, WorkoutPlan } from "@/types";
-
-const defaultProfile: UserProfile = {
-  name: "",
-  age: 18,
-  sex: "male",
-  weight_kg: 50,
-  height_cm: 170,
-  goal: "maintenance",
-  activity_level: "moderate",
-  diet_preference: "balanced",
-  equipment: "bodyweight",
-  training_days: 3,
-};
-
-function loadProfile(): UserProfile {
-  if (typeof window === "undefined") return defaultProfile;
-
-  try {
-    const savedProfile = localStorage.getItem("trainwise_profile");
-    return savedProfile ? (JSON.parse(savedProfile) as UserProfile) : defaultProfile;
-  } catch {
-    localStorage.removeItem("trainwise_profile");
-    return defaultProfile;
-  }
-}
-
-export default function HomePage() {
-  const [mounted, setMounted] = useState(false);
-  const [profile, setProfile] = useState<UserProfile>(defaultProfile);
-  const [nutritionPlan, setNutritionPlan] = useState<NutritionPlan | null>(null);
-  const [workoutPlan, setWorkoutPlan] = useState<WorkoutPlan | null>(null);
-  const [nutritionError, setNutritionError] = useState("");
-  const [workoutError, setWorkoutError] = useState("");
-  const [nutritionLoading, setNutritionLoading] = useState(false);
-  const [workoutLoading, setWorkoutLoading] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
-  const [showToast, setShowToast] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    setProfile(loadProfile());
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-    localStorage.setItem("trainwise_profile", JSON.stringify(profile));
-  }, [profile, mounted]);
-
-  const triggerToast = (message: string) => {
-    setToastMessage(message);
-    setShowToast(true);
-    window.setTimeout(() => setShowToast(false), 2500);
-  };
-
-  const resetProfile = () => {
-    setProfile(defaultProfile);
-    setNutritionPlan(null);
-    setWorkoutPlan(null);
-    setNutritionError("");
-    setWorkoutError("");
-    localStorage.removeItem("trainwise_profile");
-  };
-
-  const validateProfile = (data: UserProfile) => {
-    if (!data.name.trim()) return "Name is required.";
-    if (data.age < 13 || data.age > 80) return "Age must be between 13 and 80.";
-    if (data.weight_kg <= 20 || data.weight_kg > 300) return "Weight must be between 20 and 300 kg.";
-    if (data.height_cm <= 100 || data.height_cm > 250) return "Height must be between 100 and 250 cm.";
-    if (data.training_days < 2 || data.training_days > 7) return "Training days must be between 2 and 7.";
-    return "";
-  };
-
-  const generateNutrition = async () => {
-    setNutritionError("");
-    const validationError = validateProfile(profile);
-    if (validationError) {
-      setNutritionError(validationError);
-      return;
-    }
-
-    setNutritionLoading(true);
-
-    try {
-      const res = await fetch("http://127.0.0.1:8000/nutrition/plan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profile),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setNutritionError(
-          data?.detail ? JSON.stringify(data.detail) : "Failed to generate nutrition plan."
-        );
-        return;
-      }
-
-      setNutritionPlan(data);
-      triggerToast("Nutrition plan generated.");
-    } catch (error) {
-      console.error("Nutrition request failed", error);
-      setNutritionError("Failed to connect to the backend.");
-    } finally {
-      setNutritionLoading(false);
-    }
-  };
-
-  const generateWorkout = async () => {
-    setWorkoutError("");
-    const validationError = validateProfile(profile);
-    if (validationError) {
-      setWorkoutError(validationError);
-      return;
-    }
-
-    setWorkoutLoading(true);
-
-    try {
-      const res = await fetch("http://127.0.0.1:8000/workout/plan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profile),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setWorkoutError(
-          data?.detail ? JSON.stringify(data.detail) : "Failed to generate workout plan."
-        );
-        return;
-      }
-
-      setWorkoutPlan(data);
-      triggerToast("Workout plan generated.");
-    } catch (error) {
-      console.error("Workout request failed", error);
-      setWorkoutError("Failed to connect to the backend.");
-    } finally {
-      setWorkoutLoading(false);
-    }
-  };
-
-  const shouldShowStats =
-    mounted &&
-    profile.name.trim() !== "" &&
-    !(profile.age === 18 && profile.weight_kg === 50 && profile.height_cm === 170);
-
+export default function LandingPage() {
   return (
-    <main className="min-h-screen px-4 py-6 md:px-6 md:py-8" suppressHydrationWarning>
-      <Toast message={toastMessage} show={showToast} />
-
-      <div className="mx-auto max-w-6xl space-y-8">
-        <section className="rounded-[24px] border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur-sm md:p-8">
-          <div className="max-w-3xl">
-            <p className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 px-6 py-10">
+      <section className="mx-auto flex min-h-[85vh] max-w-6xl items-center">
+        <div className="grid items-center gap-10 md:grid-cols-2">
+          <div>
+            <p className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700">
               AI Fitness & Nutrition Coach
             </p>
 
-            <h1 className="mt-4 text-4xl font-bold tracking-tight text-slate-900 md:text-5xl">
-              TrainWise
+            <h1 className="mt-6 text-5xl font-bold tracking-tight text-slate-900 md:text-6xl">
+              Train smarter with{" "}
+              <span className="text-blue-600">TrainWise</span>
             </h1>
 
-            <p className="mt-4 text-lg leading-relaxed text-slate-600 md:text-xl">
-              Smarter Fitness. Personalized Coaching.
+            <p className="mt-6 text-lg leading-8 text-slate-600">
+              Create your profile, set your fitness goal, and get personalized
+              workout and nutrition guidance powered by AI.
             </p>
+
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Link
+                href="/auth?mode=register"
+                className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow hover:bg-blue-700"
+              >
+                Get Started
+              </Link>
+
+              <Link
+                href="/auth?mode=login"
+                className="rounded-xl border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Login
+              </Link>
+            </div>
           </div>
-        </section>
 
-        <ProfileForm
-          profile={profile}
-          setProfile={setProfile}
-          onGenerateNutrition={generateNutrition}
-          onGenerateWorkout={generateWorkout}
-          onResetProfile={resetProfile}
-          nutritionLoading={nutritionLoading}
-          workoutLoading={workoutLoading}
-        />
+          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl">
+            <h2 className="text-2xl font-bold text-slate-900">
+              Your personal fitness dashboard
+            </h2>
 
-        {nutritionError && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-            {nutritionError}
+            <div className="mt-6 space-y-4">
+              <Feature
+                title="Profile setup"
+                text="Add your name, age, weight, height, goal, diet preference, equipment, and training days."
+              />
+
+              <Feature
+                title="AI fitness chat"
+                text="Ask TrainWise about workouts, meals, fat loss, muscle gain, recovery, and healthy habits."
+              />
+
+              <Feature
+                title="Workout plans"
+                text="Generate training plans based on your goal, equipment, and weekly schedule."
+              />
+
+              <Feature
+                title="Nutrition plans"
+                text="Get nutrition guidance based on your body metrics, activity level, and fitness goal."
+              />
+            </div>
           </div>
-        )}
-
-        {workoutError && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-            {workoutError}
-          </div>
-        )}
-
-        {shouldShowStats && (
-          <StatsCard
-            weightKg={profile.weight_kg}
-            heightCm={profile.height_cm}
-            age={profile.age}
-            sex={profile.sex}
-            activityLevel={profile.activity_level}
-          />
-        )}
-
-        <div className="grid grid-cols-1 items-start gap-8 xl:grid-cols-2">
-          <NutritionCard plan={nutritionPlan} loading={nutritionLoading} />
-          <WorkoutCard plan={workoutPlan} loading={workoutLoading} />
         </div>
-
-        <ChatBox profile={profile} />
-      </div>
+      </section>
     </main>
+  );
+}
+
+function Feature({ title, text }: { title: string; text: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 p-4">
+      <h3 className="font-semibold text-slate-900">{title}</h3>
+      <p className="mt-1 text-sm leading-6 text-slate-600">{text}</p>
+    </div>
   );
 }
