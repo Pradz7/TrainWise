@@ -1,41 +1,55 @@
 # TrainWise
 
-TrainWise is an AI-powered fitness and nutrition coach that helps users generate personalized workout plans, calorie targets, macro guidance, meal suggestions, and chatbot-based coaching support.
+TrainWise is an AI-powered fitness and nutrition coach that helps users create a personalized fitness profile, generate workout and nutrition plans, track progress, and receive chatbot-based coaching support.
 
 ## Features
 
-- Personalized fitness profile
+- Landing page with register and login flow
+- Demo authentication using local storage
+- Onboarding profile form for new users
+- Personalized fitness dashboard
+- Profile page with user information summary
+- Navbar with Dashboard, Overview, Plans, Tracker, Profile, and Dark Mode toggle
+- Dark mode and light mode support
 - Workout plan generator
 - Nutrition plan generator
 - BMI, BMR, and TDEE summary
-- Floating AI chat widget
+- Body status card based on BMI category
+- Calendar-style progress tracker
+- Daily progress tracking by date, weight, and trained muscle group
+- Floating circular AI chat widget
+- Gemini-powered chatbot for fitness and nutrition questions
 - Quick prompt buttons in chat
-- Local storage for saved profile and chat history
-- Loading states and success toasts
-- Expandable workout and nutrition sections
+- Saved profile, tracker, theme, and chat history using local storage
+- Loading states, error handling, and success toasts
+- Responsive dashboard UI
 
 ## Tech Stack
 
 ### Frontend
+
 - Next.js
 - TypeScript
 - Tailwind CSS
+- Local Storage
 
 ### Backend
+
 - FastAPI
 - Python
 - Pandas
+- Uvicorn
 
 ### AI
-- Gemini API with fallback handling
 
-## Screenshots
+- Gemini API
+- Fallback response handling
 
-### Profile
-![Profile](screenshots/profile.png)
+## App Flow
 
-### Plans
-![Plans](screenshots/plans.png)
-
-### Chat
-![Chat](screenshots/chat.png)
+```text
+Landing Page
+→ Register/Login
+→ Onboarding Profile Form
+→ Dashboard
+→ Generate Plans / Track Progress / Chat with AI
