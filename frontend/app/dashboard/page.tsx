@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Navbar from "@/components/Navbar";
 import NutritionCard from "@/components/NutritionCard";
 import WorkoutCard from "@/components/WorkoutCard";
 import ChatBox from "@/components/ChatBox";
@@ -28,10 +29,22 @@ function loadProfile(): UserProfile {
 
   try {
     const savedProfile = localStorage.getItem("trainwise_profile");
+    const savedUser = localStorage.getItem("trainwise_user");
 
-    return savedProfile
+    let profile: UserProfile = savedProfile
       ? ({ ...defaultProfile, ...JSON.parse(savedProfile) } as UserProfile)
       : { ...defaultProfile };
+
+    if (savedUser && !profile.name.trim()) {
+      const user = JSON.parse(savedUser) as { name?: string };
+
+      profile = {
+        ...profile,
+        name: user.name || "",
+      };
+    }
+
+    return profile;
   } catch {
     localStorage.removeItem("trainwise_profile");
     return { ...defaultProfile };
@@ -41,7 +54,6 @@ function loadProfile(): UserProfile {
 export default function DashboardPage() {
   const router = useRouter();
 
-  const [authChecked, setAuthChecked] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [profile, setProfile] = useState<UserProfile>(defaultProfile);
   const [nutritionPlan, setNutritionPlan] = useState<NutritionPlan | null>(
@@ -63,40 +75,14 @@ export default function DashboardPage() {
       return;
     }
 
-    const savedProfile = loadProfile();
-    let nextProfile = savedProfile;
-
-    try {
-      const savedUser = localStorage.getItem("trainwise_user");
-
-      if (savedUser) {
-        const user = JSON.parse(savedUser) as { name?: string };
-
-        if (!savedProfile.name.trim() && user.name) {
-          nextProfile = {
-            ...savedProfile,
-            name: user.name,
-          };
-        }
-      }
-    } catch {
-      // Ignore invalid saved user data.
-    }
-
-    setProfile(nextProfile);
+    setProfile(loadProfile());
     setMounted(true);
-    setAuthChecked(true);
   }, [router]);
 
   const triggerToast = (message: string) => {
     setToastMessage(message);
     setShowToast(true);
     window.setTimeout(() => setShowToast(false), 2500);
-  };
-
-  const logout = () => {
-    localStorage.removeItem("trainwise_logged_in");
-    router.push("/");
   };
 
   const editProfile = () => {
@@ -201,7 +187,6 @@ export default function DashboardPage() {
   };
 
   const shouldShowStats =
-    mounted &&
     profile.name.trim() !== "" &&
     !(
       profile.age === 18 &&
@@ -209,149 +194,338 @@ export default function DashboardPage() {
       profile.height_cm === 170
     );
 
-  if (!authChecked) {
+  if (!mounted) {
     return (
-      <main className="flex min-h-screen items-center justify-center text-slate-600">
+      <main className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600">
         Loading TrainWise...
       </main>
     );
   }
 
   return (
-    <main
-      className="min-h-screen px-4 py-6 md:px-6 md:py-8"
-      suppressHydrationWarning
-    >
-      <Toast message={toastMessage} show={showToast} />
+    <>
+      <Navbar profile={profile} />
 
-      <div className="mx-auto max-w-6xl space-y-8">
-        <section className="rounded-[24px] border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur-sm md:p-8">
-          <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-            <div className="max-w-3xl">
-              <p className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+      <main
+        className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.12),_transparent_35%),radial-gradient(circle_at_top_right,_rgba(16,185,129,0.12),_transparent_30%),linear-gradient(to_bottom_right,_#f8fbff,_#f8fafc,_#f0fdf4)] px-4 py-8 md:px-6"
+        suppressHydrationWarning
+      >
+        <Toast message={toastMessage} show={showToast} />
+
+        <div className="mx-auto max-w-6xl space-y-10">
+          <section className="relative overflow-hidden rounded-[32px] bg-white/75 p-8 shadow-[0_20px_60px_rgba(15,23,42,0.08)] ring-1 ring-white/70 backdrop-blur-xl md:p-10">
+            <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-blue-200/40 blur-3xl" />
+            <div className="absolute -bottom-16 left-0 h-44 w-44 rounded-full bg-emerald-200/40 blur-3xl" />
+
+            <div className="relative z-10 max-w-3xl">
+              <p className="inline-flex rounded-full bg-blue-50 px-4 py-1.5 text-sm font-medium text-blue-700 ring-1 ring-blue-100">
                 AI Fitness & Nutrition Coach
               </p>
 
-              <h1 className="mt-4 text-4xl font-bold tracking-tight text-slate-900 md:text-5xl">
+              <h1 className="mt-5 text-5xl font-bold tracking-tight text-slate-900 md:text-6xl">
                 TrainWise
               </h1>
 
-              <p className="mt-4 text-lg leading-relaxed text-slate-600 md:text-xl">
-                Smarter Fitness. Personalized Coaching.
+              <p className="mt-4 max-w-2xl text-lg leading-relaxed text-slate-600 md:text-xl">
+                Smarter fitness with personalized workouts, nutrition planning,
+                progress tracking, and AI coaching in one place.
               </p>
+
+              <div className="mt-8 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={generateNutrition}
+                  disabled={nutritionLoading}
+                  className="rounded-full bg-slate-950 px-6 py-3 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {nutritionLoading ? "Generating..." : "Generate Nutrition"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={generateWorkout}
+                  disabled={workoutLoading}
+                  className="rounded-full bg-blue-600 px-6 py-3 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {workoutLoading ? "Generating..." : "Generate Workout"}
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section
+            id="overview"
+            className="scroll-mt-28 grid gap-6 rounded-[32px] bg-white/65 p-7 shadow-[0_20px_60px_rgba(15,23,42,0.06)] ring-1 ring-white/70 backdrop-blur-xl md:grid-cols-[1.15fr_0.85fr] md:p-8"
+          >
+            <div className="flex min-h-full flex-col justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
+                  Overview
+                </p>
+
+                <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
+                  Welcome back, {profile.name || "athlete"}!
+                </h2>
+
+                <p className="mt-3 max-w-2xl text-slate-600">
+                  Your profile is ready. Generate plans, track your training,
+                  and chat with TrainWise anytime.
+                </p>
+
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <InfoPill label="Goal" value={formatValue(profile.goal)} />
+                  <InfoPill
+                    label="Activity"
+                    value={formatValue(profile.activity_level)}
+                  />
+                  <InfoPill
+                    label="Diet"
+                    value={formatValue(profile.diet_preference)}
+                  />
+                  <InfoPill
+                    label="Training"
+                    value={`${profile.training_days} days/week`}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                <OverviewMiniCard
+                  label="Current Body"
+                  title={`${profile.weight_kg} kg`}
+                  description={`${profile.height_cm} cm height`}
+                />
+
+                <OverviewMiniCard
+                  label="Training Setup"
+                  title={formatValue(profile.equipment)}
+                  description={`${profile.training_days} training days weekly`}
+                />
+
+                <OverviewMiniCard
+                  label="Today’s Focus"
+                  title={getGoalFocusTitle(profile.goal)}
+                  description={getGoalFocusDescription(profile.goal)}
+                />
+
+                <OverviewMiniCard
+                  label="Coach Tip"
+                  title="Stay consistent"
+                  description="Small daily progress beats random intense workouts."
+                />
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={logout}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              Logout
-            </button>
-          </div>
-        </section>
+            <BodyStatusCard profile={profile} onEditProfile={editProfile} />
+          </section>
 
-        <section className="rounded-[24px] border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur-sm md:p-8">
-          <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900">
-                Welcome back, {profile.name || "athlete"}!
-              </h2>
-
-              <p className="mt-2 text-slate-600">
-                Your profile is ready. Generate plans, track progress, and chat
-                with TrainWise.
-              </p>
+          {nutritionError && (
+            <div className="rounded-2xl bg-red-50 px-4 py-3 text-red-700 ring-1 ring-red-100">
+              {nutritionError}
             </div>
+          )}
 
-            <button
-              type="button"
-              onClick={editProfile}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              Edit Profile
-            </button>
+          {workoutError && (
+            <div className="rounded-2xl bg-red-50 px-4 py-3 text-red-700 ring-1 ring-red-100">
+              {workoutError}
+            </div>
+          )}
+
+          {shouldShowStats && (
+            <section className="rounded-[32px] bg-white/60 p-2 shadow-[0_16px_40px_rgba(15,23,42,0.05)] ring-1 ring-white/70 backdrop-blur-xl">
+              <StatsCard
+                weightKg={profile.weight_kg}
+                heightCm={profile.height_cm}
+                age={profile.age}
+                sex={profile.sex}
+                activityLevel={profile.activity_level}
+              />
+            </section>
+          )}
+
+          <div id="tracker" className="scroll-mt-28">
+            <ProgressTracker />
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <ProfileStat label="Goal" value={formatValue(profile.goal)} />
-            <ProfileStat
-              label="Activity"
-              value={formatValue(profile.activity_level)}
-            />
-            <ProfileStat
-              label="Diet"
-              value={formatValue(profile.diet_preference)}
-            />
-            <ProfileStat
-              label="Training Days"
-              value={`${profile.training_days} days/week`}
-            />
-          </div>
+          <section
+            id="plans"
+            className="scroll-mt-28 grid grid-cols-1 gap-8 xl:grid-cols-2"
+          >
+            <NutritionCard plan={nutritionPlan} loading={nutritionLoading} />
+            <WorkoutCard plan={workoutPlan} loading={workoutLoading} />
+          </section>
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={generateNutrition}
-              disabled={nutritionLoading}
-              className="rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {nutritionLoading ? "Generating..." : "Generate Nutrition Plan"}
-            </button>
-
-            <button
-              type="button"
-              onClick={generateWorkout}
-              disabled={workoutLoading}
-              className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {workoutLoading ? "Generating..." : "Generate Workout Plan"}
-            </button>
-          </div>
-        </section>
-
-        {nutritionError && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-            {nutritionError}
-          </div>
-        )}
-
-        {workoutError && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-            {workoutError}
-          </div>
-        )}
-
-        {shouldShowStats && (
-          <StatsCard
-            weightKg={profile.weight_kg}
-            heightCm={profile.height_cm}
-            age={profile.age}
-            sex={profile.sex}
-            activityLevel={profile.activity_level}
-          />
-        )}
-
-        <ProgressTracker />
-
-        <div className="grid grid-cols-1 items-start gap-8 xl:grid-cols-2">
-          <NutritionCard plan={nutritionPlan} loading={nutritionLoading} />
-          <WorkoutCard plan={workoutPlan} loading={workoutLoading} />
+          <ChatBox profile={profile} />
         </div>
-
-        <ChatBox profile={profile} />
-      </div>
-    </main>
+      </main>
+    </>
   );
 }
 
-function ProfileStat({ label, value }: { label: string; value: string }) {
+function InfoPill({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4">
-      <p className="text-sm font-medium text-slate-500">{label}</p>
-      <p className="mt-2 text-lg font-bold text-slate-900">{value}</p>
+    <div className="rounded-full bg-white px-4 py-3 shadow-sm ring-1 ring-slate-200/70">
+      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+        {label}
+      </p>
+      <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>
     </div>
   );
+}
+
+function OverviewMiniCard({
+  label,
+  title,
+  description,
+}: {
+  label: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="rounded-[22px] border border-slate-200 bg-white/70 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+        {label}
+      </p>
+
+      <h3 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">
+        {title}
+      </h3>
+
+      <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+        {description}
+      </p>
+    </div>
+  );
+}
+
+function BodyStatusCard({
+  profile,
+  onEditProfile,
+}: {
+  profile: UserProfile;
+  onEditProfile: () => void;
+}) {
+  const bmi = calculateBmi(profile.weight_kg, profile.height_cm);
+  const status = getBmiStatus(bmi);
+
+  return (
+    <div
+      className={[
+        "flex flex-col justify-between rounded-[28px] p-6 text-white shadow-lg",
+        status.gradient,
+      ].join(" ")}
+    >
+      <div>
+        <p className="text-sm text-white/70">Body status</p>
+
+        <div className="mt-4 flex items-end gap-3">
+          <h3 className="text-5xl font-bold">{bmi.toFixed(1)}</h3>
+          <p className="pb-2 text-sm font-medium text-white/70">BMI</p>
+        </div>
+
+        <div className="mt-4 inline-flex rounded-full bg-white/15 px-4 py-2 text-sm font-semibold">
+          {status.label}
+        </div>
+
+        <p className="mt-4 text-sm leading-relaxed text-white/75">
+          {status.description}
+        </p>
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={onEditProfile}
+          className="rounded-full bg-white px-5 py-3 font-semibold text-slate-900 transition hover:-translate-y-0.5"
+        >
+          Edit Profile
+        </button>
+
+        <div className="rounded-full bg-white/10 px-5 py-3 text-sm font-semibold text-white">
+          {profile.weight_kg} kg • {profile.height_cm} cm
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function calculateBmi(weightKg: number, heightCm: number) {
+  const heightM = heightCm / 100;
+
+  if (!weightKg || !heightM) {
+    return 0;
+  }
+
+  return weightKg / (heightM * heightM);
+}
+
+function getBmiStatus(bmi: number) {
+  if (bmi < 18.5) {
+    return {
+      label: "Underweight",
+      description:
+        "Your BMI is below the healthy range. Focus on consistent meals, enough protein, and gradual strength training.",
+      gradient: "bg-gradient-to-br from-amber-500 to-orange-600",
+    };
+  }
+
+  if (bmi < 25) {
+    return {
+      label: "Healthy Weight",
+      description:
+        "Your BMI is in the healthy range. Keep building consistency with training, nutrition, sleep, and recovery.",
+      gradient: "bg-gradient-to-br from-emerald-600 to-teal-700",
+    };
+  }
+
+  if (bmi < 30) {
+    return {
+      label: "Overweight",
+      description:
+        "Your BMI is above the healthy range. A balanced calorie target, regular workouts, and daily movement can help.",
+      gradient: "bg-gradient-to-br from-blue-600 to-indigo-700",
+    };
+  }
+
+  return {
+    label: "Obesity",
+    description:
+      "Your BMI is in the obesity range. Start with sustainable habits and consider professional guidance for safer progress.",
+    gradient: "bg-gradient-to-br from-rose-600 to-red-700",
+  };
+}
+
+function getGoalFocusTitle(goal: string) {
+  if (goal === "weight_loss" || goal === "fat_loss") {
+    return "Calorie control";
+  }
+
+  if (goal === "muscle_gain" || goal === "gain_muscle") {
+    return "Build strength";
+  }
+
+  if (goal === "maintenance") {
+    return "Maintain balance";
+  }
+
+  return "Improve fitness";
+}
+
+function getGoalFocusDescription(goal: string) {
+  if (goal === "weight_loss" || goal === "fat_loss") {
+    return "Focus on protein, steps, and a steady calorie deficit.";
+  }
+
+  if (goal === "muscle_gain" || goal === "gain_muscle") {
+    return "Focus on progressive overload, protein, and recovery.";
+  }
+
+  if (goal === "maintenance") {
+    return "Keep training consistent while maintaining stable energy.";
+  }
+
+  return "Follow your plan and keep tracking your progress.";
 }
 
 function formatValue(value: string) {

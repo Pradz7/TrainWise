@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #f5f7fb;
   --foreground: #0f172a;
@@ -12,6 +14,18 @@
   --success-hover: #15803d;
 }
 
+.dark {
+  --background: #020617;
+  --foreground: #f8fafc;
+  --card: #0f172a;
+  --muted: #cbd5e1;
+  --border: #334155;
+  --primary: #60a5fa;
+  --primary-hover: #3b82f6;
+  --success: #22c55e;
+  --success-hover: #16a34a;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -22,12 +36,28 @@ html {
 
 body {
   margin: 0;
+  min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 30%),
-    radial-gradient(circle at top right, rgba(22, 163, 74, 0.06), transparent 25%),
-    var(--background);
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.1), transparent 32%),
+    radial-gradient(circle at top right, rgba(22, 163, 74, 0.08), transparent 28%),
+    linear-gradient(to bottom right, #f8fbff, #f8fafc, #f0fdf4);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.dark body {
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.2), transparent 32%),
+    radial-gradient(circle at top right, rgba(16, 185, 129, 0.14), transparent 28%),
+    linear-gradient(to bottom right, #020617, #0f172a, #111827);
+  color: var(--foreground);
+}
+
+.dark main {
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.2), transparent 32%),
+    radial-gradient(circle at top right, rgba(16, 185, 129, 0.14), transparent 28%),
+    linear-gradient(to bottom right, #020617, #0f172a, #111827) !important;
 }
 
 input,
@@ -47,7 +77,19 @@ textarea {
   border-radius: 14px;
   padding: 14px 16px;
   outline: none;
-  transition: all 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+  background: #0f172a;
+  color: #f8fafc;
+  border-color: #334155;
 }
 
 input::placeholder,
@@ -55,18 +97,37 @@ textarea::placeholder {
   color: #94a3b8;
 }
 
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748b;
+}
+
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: #93c5fd;
+  border-color: #60a5fa;
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
 }
 
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.18);
+}
+
+textarea {
+  resize: vertical;
+}
+
 button {
-  border: none;
-  border-radius: 14px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
 }
 
 button:hover {
@@ -77,28 +138,99 @@ button:active {
   transform: translateY(0);
 }
 
-.input {
-  width: 100%;
-  border-radius: 0.75rem;
-  border: 1px solid rgb(203 213 225);
-  padding: 0.75rem 1rem;
-  outline: none;
-}
-
-.input:focus {
-  border-color: rgb(59 130 246);
-  box-shadow: 0 0 0 2px rgb(59 130 246 / 0.25);
+button:disabled {
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.6;
 }
 
 .input {
   width: 100%;
   border-radius: 0.75rem;
   border: 1px solid rgb(203, 213, 225);
+  background: white;
+  color: #0f172a;
   padding: 0.75rem 1rem;
   outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.dark .input {
+  background: #0f172a;
+  color: #f8fafc;
+  border-color: #334155;
 }
 
 .input:focus {
   border-color: rgb(59, 130, 246);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Dark mode compatibility for existing dashboard cards */
+.dark .bg-white\/60,
+.dark .bg-white\/65,
+.dark .bg-white\/75,
+.dark .bg-white\/80,
+.dark .bg-white\/85,
+.dark .bg-white\/90,
+.dark .bg-white\/95 {
+  background-color: rgba(15, 23, 42, 0.84) !important;
+}
+
+.dark .bg-white {
+  background-color: #0f172a !important;
+}
+
+.dark .bg-slate-50,
+.dark .bg-slate-50\/80,
+.dark .bg-slate-100 {
+  background-color: rgba(30, 41, 59, 0.85) !important;
+}
+
+.dark .text-slate-950,
+.dark .text-slate-900 {
+  color: #f8fafc !important;
+}
+
+.dark .text-slate-800,
+.dark .text-slate-700 {
+  color: #e2e8f0 !important;
+}
+
+.dark .text-slate-600,
+.dark .text-slate-500,
+.dark .text-slate-400 {
+  color: #cbd5e1 !important;
+}
+
+.dark .border-slate-200,
+.dark .border-slate-300 {
+  border-color: rgba(51, 65, 85, 0.9) !important;
+}
+
+.dark .ring-white\/70,
+.dark .ring-slate-200,
+.dark .ring-slate-200\/70 {
+  --tw-ring-color: rgba(51, 65, 85, 0.8) !important;
+}
+
+.dark .shadow-sm,
+.dark .shadow-lg,
+.dark .shadow-xl,
+.dark .shadow-2xl {
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35) !important;
+}
+
+::selection {
+  background: rgba(37, 99, 235, 0.18);
+  color: #0f172a;
+}
+
+.dark ::selection {
+  background: rgba(96, 165, 250, 0.3);
+  color: #f8fafc;
 }
