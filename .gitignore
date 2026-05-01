@@ -9,3 +9,8 @@ node_modules/
 out/
 dist/
 .DS_Storebackend/.env
+frontend/.env.local
+
+# Keep real frontend env private, but allow example env file
+frontend/.env.local
+!frontend/.env.local.example

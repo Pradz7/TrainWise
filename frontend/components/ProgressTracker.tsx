@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 type TrackerEntry = {
   date: string;
@@ -9,6 +10,12 @@ type TrackerEntry = {
 };
 
 type TrackerEntries = Record<string, TrackerEntry>;
+
+type TrackerRow = {
+  entry_date: string;
+  weight_kg: number;
+  muscle_part: string;
+};
 
 const muscleParts = [
   "Chest",
@@ -35,6 +42,19 @@ function parseDate(dateString: string) {
   return new Date(year, month - 1, day);
 }
 
+function getMonthRange(monthDate: Date) {
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
+
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+
+  return {
+    startDate: formatDate(firstDay),
+    endDate: formatDate(lastDay),
+  };
+}
+
 function getInitialEntries(): TrackerEntries {
   if (typeof window === "undefined") {
     return {};
@@ -54,6 +74,18 @@ function getInitialEntries(): TrackerEntries {
   }
 }
 
+function mapRowsToEntries(rows: TrackerRow[]) {
+  return rows.reduce<TrackerEntries>((acc, row) => {
+    acc[row.entry_date] = {
+      date: row.entry_date,
+      weight: String(row.weight_kg),
+      musclePart: row.muscle_part,
+    };
+
+    return acc;
+  }, {});
+}
+
 const today = formatDate(new Date());
 
 export default function ProgressTracker() {
@@ -67,7 +99,97 @@ export default function ProgressTracker() {
   const [musclePart, setMusclePart] = useState(
     () => entries[today]?.musclePart || "Chest"
   );
+  const [userId, setUserId] = useState("");
+  const [loadingEntries, setLoadingEntries] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadUser() {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
+      if (ignore) return;
+
+      if (error || !user) {
+        setMessage("Please log in to use the tracker.");
+        setLoadingEntries(false);
+        return;
+      }
+
+      setUserId(user.id);
+    }
+
+    loadUser();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadMonthEntries() {
+      if (!userId) return;
+
+      setLoadingEntries(true);
+      setMessage("");
+
+      const { startDate, endDate } = getMonthRange(currentMonth);
+
+      const { data, error } = await supabase
+        .from("tracker_entries")
+        .select("entry_date, weight_kg, muscle_part")
+        .eq("user_id", userId)
+        .gte("entry_date", startDate)
+        .lte("entry_date", endDate)
+        .order("entry_date", { ascending: true });
+
+      if (ignore) return;
+
+      if (error) {
+        setMessage(error.message);
+        setLoadingEntries(false);
+        return;
+      }
+
+      const monthEntries = mapRowsToEntries((data || []) as TrackerRow[]);
+
+      setEntries((current) => {
+        const updatedEntries = {
+          ...current,
+          ...monthEntries,
+        };
+
+        localStorage.setItem(
+          "trainwise_calendar_tracker",
+          JSON.stringify(updatedEntries)
+        );
+
+        return updatedEntries;
+      });
+
+      const selectedEntry = monthEntries[selectedDate] || entries[selectedDate];
+
+      if (selectedEntry) {
+        setWeight(selectedEntry.weight);
+        setMusclePart(selectedEntry.musclePart);
+      }
+
+      setLoadingEntries(false);
+    }
+
+    loadMonthEntries();
+
+    return () => {
+      ignore = true;
+    };
+  }, [currentMonth, userId, selectedDate]);
 
   const calendarDays = useMemo(() => {
     const year = currentMonth.getFullYear();
@@ -101,11 +223,46 @@ export default function ProgressTracker() {
     setMessage("");
   }
 
-  function saveEntry() {
-    if (!selectedDate) return;
+  async function saveEntry() {
+    if (!selectedDate || saving) return;
+
+    if (!userId) {
+      setMessage("Please log in again before saving.");
+      return;
+    }
 
     if (!weight.trim()) {
       setMessage("Please enter your weight.");
+      return;
+    }
+
+    const numericWeight = Number(weight);
+
+    if (Number.isNaN(numericWeight) || numericWeight <= 20 || numericWeight > 300) {
+      setMessage("Weight must be between 20 and 300 kg.");
+      return;
+    }
+
+    setSaving(true);
+    setMessage("");
+
+    const { error } = await supabase.from("tracker_entries").upsert(
+      {
+        user_id: userId,
+        entry_date: selectedDate,
+        weight_kg: numericWeight,
+        muscle_part: musclePart,
+        updated_at: new Date().toISOString(),
+      },
+      {
+        onConflict: "user_id,entry_date",
+      }
+    );
+
+    setSaving(false);
+
+    if (error) {
+      setMessage(error.message);
       return;
     }
 
@@ -113,7 +270,7 @@ export default function ProgressTracker() {
       ...entries,
       [selectedDate]: {
         date: selectedDate,
-        weight: weight.trim(),
+        weight: String(numericWeight),
         musclePart,
       },
     };
@@ -124,10 +281,34 @@ export default function ProgressTracker() {
       JSON.stringify(updatedEntries)
     );
 
-    setMessage("Tracker saved.");
+    setWeight(String(numericWeight));
+    setMessage("Tracker saved to Supabase.");
   }
 
-  function deleteEntry() {
+  async function deleteEntry() {
+    if (!selectedDate || saving) return;
+
+    if (!userId) {
+      setMessage("Please log in again before deleting.");
+      return;
+    }
+
+    setSaving(true);
+    setMessage("");
+
+    const { error } = await supabase
+      .from("tracker_entries")
+      .delete()
+      .eq("user_id", userId)
+      .eq("entry_date", selectedDate);
+
+    setSaving(false);
+
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+
     const updatedEntries = { ...entries };
 
     delete updatedEntries[selectedDate];
@@ -140,7 +321,7 @@ export default function ProgressTracker() {
 
     setWeight("");
     setMusclePart("Chest");
-    setMessage("Tracker entry deleted.");
+    setMessage("Tracker entry deleted from Supabase.");
   }
 
   function goToPreviousMonth() {
@@ -180,6 +361,12 @@ export default function ProgressTracker() {
           <p className="mt-2 text-slate-600 dark:text-slate-300">
             Click a date to log your weight and the muscle group you trained.
           </p>
+
+          {loadingEntries && (
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              Loading tracker entries from Supabase...
+            </p>
+          )}
         </div>
 
         <button
@@ -370,15 +557,17 @@ export default function ProgressTracker() {
               <button
                 type="button"
                 onClick={saveEntry}
-                className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700"
+                disabled={saving}
+                className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Save Date
+                {saving ? "Saving..." : "Save Date"}
               </button>
 
               <button
                 type="button"
                 onClick={deleteEntry}
-                className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                disabled={saving}
+                className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
               >
                 Delete Entry
               </button>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UserProfile } from "@/types";
@@ -23,6 +24,25 @@ function getInitials(name: string) {
 
 export default function Navbar({ profile }: NavbarProps) {
   const router = useRouter();
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node)
+      ) {
+        setProfileMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   function scrollToSection(sectionId: string) {
     const section = document.getElementById(sectionId);
@@ -55,6 +75,10 @@ export default function Navbar({ profile }: NavbarProps) {
 
       window.history.replaceState(null, "", "/dashboard");
     }, 50);
+  }
+
+  function closeProfileMenu() {
+    setProfileMenuOpen(false);
   }
 
   return (
@@ -116,13 +140,59 @@ export default function Navbar({ profile }: NavbarProps) {
         <div className="flex items-center gap-3">
           <ThemeToggle />
 
-          <Link
-            href="/profile"
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white shadow-sm ring-4 ring-blue-100 hover:bg-blue-700 dark:ring-blue-900/50"
-            title="Open profile"
-          >
-            {getInitials(profile.name)}
-          </Link>
+          <div ref={menuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setProfileMenuOpen((current) => !current)}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white shadow-sm ring-4 ring-blue-100 hover:bg-blue-700 dark:ring-blue-900/50"
+              title="Open profile menu"
+              aria-label="Open profile menu"
+            >
+              {getInitials(profile.name)}
+            </button>
+
+            {profileMenuOpen && (
+              <div className="absolute right-0 mt-3 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+                <div className="border-b border-slate-200 px-4 py-4 dark:border-slate-700">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">
+                    {profile.name || "User"}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    TrainWise account
+                  </p>
+                </div>
+
+                <div className="p-2">
+                  <Link
+                    href="/profile"
+                    onClick={closeProfileMenu}
+                    className="block rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white"
+                  >
+                    Profile
+                  </Link>
+
+                  <Link
+                    href="/saved-plans"
+                    onClick={closeProfileMenu}
+                    className="block rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white"
+                  >
+                    Saved Plans
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeProfileMenu();
+                      scrollToSection("tracker");
+                    }}
+                    className="block w-full rounded-xl bg-transparent px-4 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white"
+                  >
+                    Tracker
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </nav>

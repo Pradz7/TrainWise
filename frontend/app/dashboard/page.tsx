@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 import Navbar from "@/components/Navbar";
 import NutritionCard from "@/components/NutritionCard";
 import WorkoutCard from "@/components/WorkoutCard";
@@ -24,7 +25,35 @@ const defaultProfile: UserProfile = {
   training_days: 3,
 };
 
-function loadProfile(): UserProfile {
+type ProfileRow = {
+  name: string;
+  age: number;
+  sex: string;
+  weight_kg: number;
+  height_cm: number;
+  goal: string;
+  activity_level: string;
+  diet_preference: string;
+  equipment: string;
+  training_days: number;
+};
+
+function mapProfileRow(row: ProfileRow): UserProfile {
+  return {
+    name: row.name || "",
+    age: Number(row.age),
+    sex: row.sex as UserProfile["sex"],
+    weight_kg: Number(row.weight_kg),
+    height_cm: Number(row.height_cm),
+    goal: row.goal as UserProfile["goal"],
+    activity_level: row.activity_level as UserProfile["activity_level"],
+    diet_preference: row.diet_preference as UserProfile["diet_preference"],
+    equipment: row.equipment as UserProfile["equipment"],
+    training_days: Number(row.training_days),
+  };
+}
+
+function loadLocalProfileFallback(): UserProfile {
   if (typeof window === "undefined") return { ...defaultProfile };
 
   try {
@@ -56,6 +85,7 @@ export default function DashboardPage() {
 
   const [mounted, setMounted] = useState(false);
   const [profile, setProfile] = useState<UserProfile>(defaultProfile);
+  const [dashboardError, setDashboardError] = useState("");
   const [nutritionPlan, setNutritionPlan] = useState<NutritionPlan | null>(
     null
   );
@@ -64,19 +94,77 @@ export default function DashboardPage() {
   const [workoutError, setWorkoutError] = useState("");
   const [nutritionLoading, setNutritionLoading] = useState(false);
   const [workoutLoading, setWorkoutLoading] = useState(false);
+  const [savingPlanType, setSavingPlanType] = useState<
+    "nutrition" | "workout" | ""
+  >("");
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    const loggedIn = localStorage.getItem("trainwise_logged_in");
+    let ignore = false;
 
-    if (loggedIn !== "true") {
-      router.replace("/auth?mode=login");
-      return;
+    async function loadDashboardProfile() {
+      setDashboardError("");
+
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (ignore) return;
+
+      if (userError || !user) {
+        localStorage.removeItem("trainwise_logged_in");
+        router.replace("/auth?mode=login");
+        return;
+      }
+
+      localStorage.setItem("trainwise_logged_in", "true");
+      localStorage.setItem(
+        "trainwise_user",
+        JSON.stringify({
+          id: user.id,
+          name: user.user_metadata?.name || "",
+          email: user.email || "",
+        })
+      );
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select(
+          "name, age, sex, weight_kg, height_cm, goal, activity_level, diet_preference, equipment, training_days"
+        )
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (ignore) return;
+
+      if (error) {
+        setDashboardError(error.message);
+        setProfile(loadLocalProfileFallback());
+        setMounted(true);
+        return;
+      }
+
+      if (!data) {
+        router.replace("/onboarding");
+        return;
+      }
+
+      const loadedProfile = mapProfileRow(data as ProfileRow);
+
+      setProfile(loadedProfile);
+      localStorage.setItem("trainwise_profile", JSON.stringify(loadedProfile));
+      localStorage.setItem("trainwise_profile_complete", "true");
+
+      setMounted(true);
     }
 
-    setProfile(loadProfile());
-    setMounted(true);
+    loadDashboardProfile();
+
+    return () => {
+      ignore = true;
+    };
   }, [router]);
 
   const triggerToast = (message: string) => {
@@ -186,6 +274,62 @@ export default function DashboardPage() {
     }
   };
 
+  async function saveGeneratedPlan(
+    planType: "nutrition" | "workout",
+    plan: NutritionPlan | WorkoutPlan
+  ) {
+    setNutritionError("");
+    setWorkoutError("");
+    setSavingPlanType(planType);
+
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        const message = "Please log in again before saving a plan.";
+
+        if (planType === "nutrition") {
+          setNutritionError(message);
+        } else {
+          setWorkoutError(message);
+        }
+
+        return;
+      }
+
+      const { error } = await supabase.from("saved_plans").insert({
+        user_id: user.id,
+        plan_type: planType,
+        title:
+          planType === "nutrition"
+            ? `Nutrition Plan - ${new Date().toLocaleDateString()}`
+            : `Workout Plan - ${new Date().toLocaleDateString()}`,
+        content: plan,
+      });
+
+      if (error) {
+        if (planType === "nutrition") {
+          setNutritionError(error.message);
+        } else {
+          setWorkoutError(error.message);
+        }
+
+        return;
+      }
+
+      triggerToast(
+        planType === "nutrition"
+          ? "Nutrition plan saved."
+          : "Workout plan saved."
+      );
+    } finally {
+      setSavingPlanType("");
+    }
+  }
+
   const shouldShowStats =
     profile.name.trim() !== "" &&
     !(
@@ -196,7 +340,7 @@ export default function DashboardPage() {
 
   if (!mounted) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600">
+      <main className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600 dark:bg-slate-950 dark:text-slate-300">
         Loading TrainWise...
       </main>
     );
@@ -213,6 +357,12 @@ export default function DashboardPage() {
         <Toast message={toastMessage} show={showToast} />
 
         <div className="mx-auto max-w-6xl space-y-10">
+          {dashboardError && (
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-700 dark:border-red-900 dark:bg-red-950/60 dark:text-red-200">
+              {dashboardError}
+            </div>
+          )}
+
           <section className="relative overflow-hidden rounded-[32px] bg-white/75 p-8 shadow-[0_20px_60px_rgba(15,23,42,0.08)] ring-1 ring-white/70 backdrop-blur-xl md:p-10">
             <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-blue-200/40 blur-3xl" />
             <div className="absolute -bottom-16 left-0 h-44 w-44 rounded-full bg-emerald-200/40 blur-3xl" />
@@ -268,8 +418,8 @@ export default function DashboardPage() {
                 </h2>
 
                 <p className="mt-3 max-w-2xl text-slate-600">
-                  Your profile is ready. Generate plans, track your training,
-                  and chat with TrainWise anytime.
+                  Your profile is ready. Generate plans, track
+                  your training, and chat with TrainWise anytime.
                 </p>
 
                 <div className="mt-6 flex flex-wrap gap-3">
@@ -351,8 +501,27 @@ export default function DashboardPage() {
             id="plans"
             className="scroll-mt-28 grid grid-cols-1 gap-8 xl:grid-cols-2"
           >
-            <NutritionCard plan={nutritionPlan} loading={nutritionLoading} />
-            <WorkoutCard plan={workoutPlan} loading={workoutLoading} />
+            <NutritionCard
+              plan={nutritionPlan}
+              loading={nutritionLoading}
+              saving={savingPlanType === "nutrition"}
+              onSave={
+                nutritionPlan
+                  ? () => saveGeneratedPlan("nutrition", nutritionPlan)
+                  : undefined
+              }
+            />
+
+            <WorkoutCard
+              plan={workoutPlan}
+              loading={workoutLoading}
+              saving={savingPlanType === "workout"}
+              onSave={
+                workoutPlan
+                  ? () => saveGeneratedPlan("workout", workoutPlan)
+                  : undefined
+              }
+            />
           </section>
 
           <ChatBox profile={profile} />
