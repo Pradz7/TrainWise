@@ -7,7 +7,6 @@ import Navbar from "@/components/Navbar";
 import NutritionCard from "@/components/NutritionCard";
 import WorkoutCard from "@/components/WorkoutCard";
 import ChatBox from "@/components/ChatBox";
-import StatsCard from "@/components/StatsCard";
 import Toast from "@/components/Toast";
 import ProgressTracker from "@/components/ProgressTracker";
 import { NutritionPlan, UserProfile, WorkoutPlan } from "@/types";
@@ -173,10 +172,6 @@ export default function DashboardPage() {
     window.setTimeout(() => setShowToast(false), 2500);
   };
 
-  const editProfile = () => {
-    router.push("/onboarding");
-  };
-
   const validateProfile = (data: UserProfile) => {
     if (!data.name.trim()) return "Name is required. Please edit your profile.";
     if (data.age < 13 || data.age > 80) return "Age must be between 13 and 80.";
@@ -198,6 +193,7 @@ export default function DashboardPage() {
 
   const generateNutrition = async () => {
     setNutritionError("");
+
     const validationError = validateProfile(profile);
 
     if (validationError) {
@@ -237,6 +233,7 @@ export default function DashboardPage() {
 
   const generateWorkout = async () => {
     setWorkoutError("");
+
     const validationError = validateProfile(profile);
 
     if (validationError) {
@@ -330,14 +327,6 @@ export default function DashboardPage() {
     }
   }
 
-  const shouldShowStats =
-    profile.name.trim() !== "" &&
-    !(
-      profile.age === 18 &&
-      profile.weight_kg === 50 &&
-      profile.height_cm === 170
-    );
-
   if (!mounted) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600 dark:bg-slate-950 dark:text-slate-300">
@@ -363,30 +352,99 @@ export default function DashboardPage() {
             </div>
           )}
 
-          <section className="relative overflow-hidden rounded-[32px] bg-white/75 p-8 shadow-[0_20px_60px_rgba(15,23,42,0.08)] ring-1 ring-white/70 backdrop-blur-xl md:p-10">
-            <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-blue-200/40 blur-3xl" />
-            <div className="absolute -bottom-16 left-0 h-44 w-44 rounded-full bg-emerald-200/40 blur-3xl" />
+          <section
+            id="overview"
+            className="scroll-mt-28 rounded-[34px] border border-slate-200/80 bg-white/75 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.06)] backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900/55 md:p-8"
+          >
+            <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-stretch">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">
+                    Overview
+                  </p>
 
-            <div className="relative z-10 max-w-3xl">
-              <p className="inline-flex rounded-full bg-blue-50 px-4 py-1.5 text-sm font-medium text-blue-700 ring-1 ring-blue-100">
-                AI Fitness & Nutrition Coach
-              </p>
+                  <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 dark:text-white md:text-4xl">
+                    Welcome back, {profile.name || "athlete"}!
+                  </h1>
 
-              <h1 className="mt-5 text-5xl font-bold tracking-tight text-slate-900 md:text-6xl">
-                TrainWise
-              </h1>
+                  <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <InfoPill label="Goal" value={formatValue(profile.goal)} />
+                    <InfoPill
+                      label="Activity"
+                      value={formatValue(profile.activity_level)}
+                    />
+                    <InfoPill
+                      label="Diet"
+                      value={formatValue(profile.diet_preference)}
+                    />
+                    <InfoPill
+                      label="Training"
+                      value={`${profile.training_days} days/week`}
+                    />
+                </div>
 
-              <p className="mt-4 max-w-2xl text-lg leading-relaxed text-slate-600 md:text-xl">
-                Smarter fitness with personalized workouts, nutrition planning,
-                progress tracking, and AI coaching in one place.
-              </p>
+                <div className="mt-7 grid gap-4 sm:grid-cols-2">
+                  <OverviewMiniCard
+                    label="Current Body"
+                    title={`${profile.weight_kg} kg`}
+                    description={`${profile.height_cm} cm height`}
+                  />
 
-              <div className="mt-8 flex flex-wrap gap-3">
+                  <OverviewMiniCard
+                    label="Training Setup"
+                    title={formatValue(profile.equipment)}
+                    description={`${profile.training_days} training days weekly`}
+                  />
+
+                  <OverviewMiniCard
+                    label="Today’s Focus"
+                    title={getGoalFocusTitle(profile.goal)}
+                    description={getGoalFocusDescription(profile.goal)}
+                  />
+
+                  <OverviewMiniCard
+                    label="Coach Tip"
+                    title="Stay consistent"
+                    description="Small daily progress beats random intense workouts."
+                  />
+                </div>
+              </div>
+
+              <BodyStatusCard profile={profile} />
+            </div>
+          </section>
+
+          <section
+            id="tracker"
+          >
+            <ProgressTracker />
+          </section>
+
+          <section
+            id="plans"
+            className="scroll-mt-28 rounded-[34px] border border-slate-200/80 bg-white/75 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.06)] backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900/55 md:p-8"
+          >
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">
+                  Plans
+                </p>
+
+                <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+                  Generate your plans
+                </h2>
+
+                <p className="mt-2 text-slate-600 dark:text-slate-300">
+                  Create a nutrition plan or workout split using your current
+                  profile.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
                 <button
                   type="button"
                   onClick={generateNutrition}
                   disabled={nutritionLoading}
-                  className="rounded-full bg-slate-950 px-6 py-3 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-full bg-slate-950 px-6 py-3 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
                 >
                   {nutritionLoading ? "Generating..." : "Generate Nutrition"}
                 </button>
@@ -401,127 +459,42 @@ export default function DashboardPage() {
                 </button>
               </div>
             </div>
-          </section>
 
-          <section
-            id="overview"
-            className="scroll-mt-28 grid gap-6 rounded-[32px] bg-white/65 p-7 shadow-[0_20px_60px_rgba(15,23,42,0.06)] ring-1 ring-white/70 backdrop-blur-xl md:grid-cols-[1.15fr_0.85fr] md:p-8"
-          >
-            <div className="flex min-h-full flex-col justify-between">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
-                  Overview
-                </p>
-
-                <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
-                  Welcome back, {profile.name || "athlete"}!
-                </h2>
-
-                <p className="mt-3 max-w-2xl text-slate-600">
-                  Your profile is ready. Generate plans, track
-                  your training, and chat with TrainWise anytime.
-                </p>
-
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <InfoPill label="Goal" value={formatValue(profile.goal)} />
-                  <InfoPill
-                    label="Activity"
-                    value={formatValue(profile.activity_level)}
-                  />
-                  <InfoPill
-                    label="Diet"
-                    value={formatValue(profile.diet_preference)}
-                  />
-                  <InfoPill
-                    label="Training"
-                    value={`${profile.training_days} days/week`}
-                  />
-                </div>
+            {nutritionError && (
+              <div className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-red-700 ring-1 ring-red-100 dark:bg-red-950/50 dark:text-red-200 dark:ring-red-900">
+                {nutritionError}
               </div>
+            )}
 
-              <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                <OverviewMiniCard
-                  label="Current Body"
-                  title={`${profile.weight_kg} kg`}
-                  description={`${profile.height_cm} cm height`}
-                />
-
-                <OverviewMiniCard
-                  label="Training Setup"
-                  title={formatValue(profile.equipment)}
-                  description={`${profile.training_days} training days weekly`}
-                />
-
-                <OverviewMiniCard
-                  label="Today’s Focus"
-                  title={getGoalFocusTitle(profile.goal)}
-                  description={getGoalFocusDescription(profile.goal)}
-                />
-
-                <OverviewMiniCard
-                  label="Coach Tip"
-                  title="Stay consistent"
-                  description="Small daily progress beats random intense workouts."
-                />
+            {workoutError && (
+              <div className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-red-700 ring-1 ring-red-100 dark:bg-red-950/50 dark:text-red-200 dark:ring-red-900">
+                {workoutError}
               </div>
-            </div>
+            )}
 
-            <BodyStatusCard profile={profile} onEditProfile={editProfile} />
-          </section>
-
-          {nutritionError && (
-            <div className="rounded-2xl bg-red-50 px-4 py-3 text-red-700 ring-1 ring-red-100">
-              {nutritionError}
-            </div>
-          )}
-
-          {workoutError && (
-            <div className="rounded-2xl bg-red-50 px-4 py-3 text-red-700 ring-1 ring-red-100">
-              {workoutError}
-            </div>
-          )}
-
-          {shouldShowStats && (
-            <section className="rounded-[32px] bg-white/60 p-2 shadow-[0_16px_40px_rgba(15,23,42,0.05)] ring-1 ring-white/70 backdrop-blur-xl">
-              <StatsCard
-                weightKg={profile.weight_kg}
-                heightCm={profile.height_cm}
-                age={profile.age}
-                sex={profile.sex}
-                activityLevel={profile.activity_level}
+            <div className="mt-8 grid grid-cols-1 gap-8 xl:grid-cols-2">
+              <NutritionCard
+                plan={nutritionPlan}
+                loading={nutritionLoading}
+                saving={savingPlanType === "nutrition"}
+                onSave={
+                  nutritionPlan
+                    ? () => saveGeneratedPlan("nutrition", nutritionPlan)
+                    : undefined
+                }
               />
-            </section>
-          )}
 
-          <div id="tracker" className="scroll-mt-28">
-            <ProgressTracker />
-          </div>
-
-          <section
-            id="plans"
-            className="scroll-mt-28 grid grid-cols-1 gap-8 xl:grid-cols-2"
-          >
-            <NutritionCard
-              plan={nutritionPlan}
-              loading={nutritionLoading}
-              saving={savingPlanType === "nutrition"}
-              onSave={
-                nutritionPlan
-                  ? () => saveGeneratedPlan("nutrition", nutritionPlan)
-                  : undefined
-              }
-            />
-
-            <WorkoutCard
-              plan={workoutPlan}
-              loading={workoutLoading}
-              saving={savingPlanType === "workout"}
-              onSave={
-                workoutPlan
-                  ? () => saveGeneratedPlan("workout", workoutPlan)
-                  : undefined
-              }
-            />
+              <WorkoutCard
+                plan={workoutPlan}
+                loading={workoutLoading}
+                saving={savingPlanType === "workout"}
+                onSave={
+                  workoutPlan
+                    ? () => saveGeneratedPlan("workout", workoutPlan)
+                    : undefined
+                }
+              />
+            </div>
           </section>
 
           <ChatBox profile={profile} />
@@ -533,11 +506,14 @@ export default function DashboardPage() {
 
 function InfoPill({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-full bg-white px-4 py-3 shadow-sm ring-1 ring-slate-200/70">
+    <div className="rounded-2xl border border-slate-200/80 bg-white px-4 py-3 shadow-sm dark:border-slate-700/70 dark:bg-slate-900/70">
       <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
         {label}
       </p>
-      <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>
+
+      <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
+        {value}
+      </p>
     </div>
   );
 }
@@ -552,7 +528,7 @@ function OverviewMiniCard({
   description: string;
 }) {
   return (
-    <div className="rounded-[22px] border border-slate-200 bg-white/70 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-700/70 dark:bg-slate-900/70">
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
         {label}
       </p>
@@ -568,53 +544,87 @@ function OverviewMiniCard({
   );
 }
 
-function BodyStatusCard({
-  profile,
-  onEditProfile,
-}: {
-  profile: UserProfile;
-  onEditProfile: () => void;
-}) {
+function BodyStatusCard({ profile }: { profile: UserProfile }) {
   const bmi = calculateBmi(profile.weight_kg, profile.height_cm);
   const status = getBmiStatus(bmi);
+  const bmr = calculateBmr(
+    profile.weight_kg,
+    profile.height_cm,
+    profile.age,
+    profile.sex
+  );
+  const tdee = calculateTdee(bmr, profile.activity_level);
 
   return (
     <div
       className={[
-        "flex flex-col justify-between rounded-[28px] p-6 text-white shadow-lg",
+        "flex min-h-full flex-col justify-between rounded-[28px] p-6 text-white shadow-[0_20px_60px_rgba(16,185,129,0.22)] md:p-7",
         status.gradient,
       ].join(" ")}
     >
       <div>
-        <p className="text-sm text-white/70">Body status</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm text-white/70">Body status</p>
 
-        <div className="mt-4 flex items-end gap-3">
-          <h3 className="text-5xl font-bold">{bmi.toFixed(1)}</h3>
-          <p className="pb-2 text-sm font-medium text-white/70">BMI</p>
+            <div className="mt-4 flex items-end gap-3">
+              <h3 className="text-5xl font-bold leading-none md:text-6xl">
+                {bmi.toFixed(1)}
+              </h3>
+              <p className="pb-2 text-sm font-medium text-white/70">BMI</p>
+            </div>
+          </div>
+
+          <div className="rounded-full bg-white/15 px-4 py-2 text-sm font-semibold">
+            {status.label}
+          </div>
         </div>
 
-        <div className="mt-4 inline-flex rounded-full bg-white/15 px-4 py-2 text-sm font-semibold">
-          {status.label}
-        </div>
-
-        <p className="mt-4 text-sm leading-relaxed text-white/75">
+        <p className="mt-5 max-w-md text-sm leading-relaxed text-white/80">
           {status.description}
         </p>
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <BodyMetric label="BMR" value={Math.round(bmr)} note="Calories at rest" />
+          <BodyMetric
+            label="TDEE"
+            value={Math.round(tdee)}
+            note="Maintenance calories/day"
+          />
+        </div>
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
-        <button
-          type="button"
-          onClick={onEditProfile}
-          className="rounded-full bg-white px-5 py-3 font-semibold text-slate-900 transition hover:-translate-y-0.5"
-        >
-          Edit Profile
-        </button>
-
-        <div className="rounded-full bg-white/10 px-5 py-3 text-sm font-semibold text-white">
+        <div className="rounded-full bg-white/12 px-5 py-3 text-sm font-semibold text-white">
           {profile.weight_kg} kg • {profile.height_cm} cm
         </div>
+
+        <div className="rounded-full bg-white/12 px-5 py-3 text-sm font-semibold text-white">
+          {formatValue(profile.goal)}
+        </div>
       </div>
+    </div>
+  );
+}
+
+function BodyMetric({
+  label,
+  value,
+  note,
+}: {
+  label: string;
+  value: number;
+  note: string;
+}) {
+  return (
+    <div className="rounded-2xl bg-white/13 p-4 backdrop-blur-sm ring-1 ring-white/10">
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
+        {label}
+      </p>
+
+      <p className="mt-2 text-3xl font-bold">{value}</p>
+
+      <p className="mt-2 text-sm text-white/75">{note}</p>
     </div>
   );
 }
@@ -627,6 +637,31 @@ function calculateBmi(weightKg: number, heightCm: number) {
   }
 
   return weightKg / (heightM * heightM);
+}
+
+function calculateBmr(
+  weightKg: number,
+  heightCm: number,
+  age: number,
+  sex: string
+) {
+  if (sex === "female") {
+    return 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
+  }
+
+  return 10 * weightKg + 6.25 * heightCm - 5 * age + 5;
+}
+
+function calculateTdee(bmr: number, activityLevel: string) {
+  const multipliers: Record<string, number> = {
+    sedentary: 1.2,
+    light: 1.375,
+    moderate: 1.55,
+    active: 1.725,
+    very_active: 1.9,
+  };
+
+  return bmr * (multipliers[activityLevel] || 1.55);
 }
 
 function getBmiStatus(bmi: number) {

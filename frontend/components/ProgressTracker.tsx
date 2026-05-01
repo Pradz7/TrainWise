@@ -7,6 +7,7 @@ type TrackerEntry = {
   date: string;
   weight: string;
   musclePart: string;
+  imageUrl?: string;
 };
 
 type TrackerEntries = Record<string, TrackerEntry>;
@@ -15,6 +16,7 @@ type TrackerRow = {
   entry_date: string;
   weight_kg: number;
   muscle_part: string;
+  image_url: string | null;
 };
 
 const muscleParts = [
@@ -80,6 +82,7 @@ function mapRowsToEntries(rows: TrackerRow[]) {
       date: row.entry_date,
       weight: String(row.weight_kg),
       musclePart: row.muscle_part,
+      imageUrl: row.image_url || "",
     };
 
     return acc;
@@ -98,6 +101,10 @@ export default function ProgressTracker() {
   const [weight, setWeight] = useState(() => entries[today]?.weight || "");
   const [musclePart, setMusclePart] = useState(
     () => entries[today]?.musclePart || "Chest"
+  );
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState(
+    () => entries[today]?.imageUrl || ""
   );
   const [userId, setUserId] = useState("");
   const [loadingEntries, setLoadingEntries] = useState(true);
@@ -144,7 +151,7 @@ export default function ProgressTracker() {
 
       const { data, error } = await supabase
         .from("tracker_entries")
-        .select("entry_date, weight_kg, muscle_part")
+        .select("entry_date, weight_kg, muscle_part, image_url")
         .eq("user_id", userId)
         .gte("entry_date", startDate)
         .lte("entry_date", endDate)
@@ -174,11 +181,13 @@ export default function ProgressTracker() {
         return updatedEntries;
       });
 
-      const selectedEntry = monthEntries[selectedDate] || entries[selectedDate];
+      const selectedEntry = monthEntries[selectedDate];
 
       if (selectedEntry) {
         setWeight(selectedEntry.weight);
         setMusclePart(selectedEntry.musclePart);
+        setImagePreview(selectedEntry.imageUrl || "");
+        setImageFile(null);
       }
 
       setLoadingEntries(false);
@@ -220,7 +229,36 @@ export default function ProgressTracker() {
     setSelectedDate(date);
     setWeight(entry?.weight || "");
     setMusclePart(entry?.musclePart || "Chest");
+    setImageFile(null);
+    setImagePreview(entry?.imageUrl || "");
     setMessage("");
+  }
+
+  async function uploadTrackerImage() {
+    if (!imageFile || !userId) {
+      return imagePreview || "";
+    }
+
+    const fileExtension = imageFile.name.split(".").pop() || "jpg";
+    const safeDate = selectedDate.replaceAll("-", "");
+    const filePath = `${userId}/${safeDate}-${Date.now()}.${fileExtension}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("tracker-images")
+      .upload(filePath, imageFile, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data } = supabase.storage
+      .from("tracker-images")
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
   }
 
   async function saveEntry() {
@@ -238,7 +276,11 @@ export default function ProgressTracker() {
 
     const numericWeight = Number(weight);
 
-    if (Number.isNaN(numericWeight) || numericWeight <= 20 || numericWeight > 300) {
+    if (
+      Number.isNaN(numericWeight) ||
+      numericWeight <= 20 ||
+      numericWeight > 300
+    ) {
       setMessage("Weight must be between 20 and 300 kg.");
       return;
     }
@@ -246,12 +288,25 @@ export default function ProgressTracker() {
     setSaving(true);
     setMessage("");
 
+    let imageUrl = imagePreview;
+
+    try {
+      imageUrl = await uploadTrackerImage();
+    } catch (error) {
+      setSaving(false);
+      setMessage(
+        error instanceof Error ? error.message : "Failed to upload image."
+      );
+      return;
+    }
+
     const { error } = await supabase.from("tracker_entries").upsert(
       {
         user_id: userId,
         entry_date: selectedDate,
         weight_kg: numericWeight,
         muscle_part: musclePart,
+        image_url: imageUrl || null,
         updated_at: new Date().toISOString(),
       },
       {
@@ -272,6 +327,7 @@ export default function ProgressTracker() {
         date: selectedDate,
         weight: String(numericWeight),
         musclePart,
+        imageUrl,
       },
     };
 
@@ -282,7 +338,9 @@ export default function ProgressTracker() {
     );
 
     setWeight(String(numericWeight));
-    setMessage("Tracker saved to Supabase.");
+    setImageFile(null);
+    setImagePreview(imageUrl);
+    setMessage("Tracker saved.");
   }
 
   async function deleteEntry() {
@@ -321,7 +379,9 @@ export default function ProgressTracker() {
 
     setWeight("");
     setMusclePart("Chest");
-    setMessage("Tracker entry deleted from Supabase.");
+    setImageFile(null);
+    setImagePreview("");
+    setMessage("Tracker entry deleted.");
   }
 
   function goToPreviousMonth() {
@@ -350,7 +410,7 @@ export default function ProgressTracker() {
     <section className="rounded-[24px] border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/80 md:p-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
-          <p className="inline-flex rounded-full border border-green-200 bg-green-50 px-3 py-1 text-sm font-medium text-green-700 dark:border-green-900 dark:bg-green-950/70 dark:text-green-300">
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">
             Calendar Tracker
           </p>
 
@@ -359,12 +419,13 @@ export default function ProgressTracker() {
           </h2>
 
           <p className="mt-2 text-slate-600 dark:text-slate-300">
-            Click a date to log your weight and the muscle group you trained.
+            Click a date to log your weight, muscle group, and optional
+            progress image.
           </p>
 
           {loadingEntries && (
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              Loading tracker entries from Supabase...
+              Loading tracker entries...
             </p>
           )}
         </div>
@@ -379,7 +440,7 @@ export default function ProgressTracker() {
       </div>
 
       <div className="mt-8 grid gap-8 xl:grid-cols-[1.3fr_0.7fr]">
-        <div>
+        <div className="rounded-[28px] border border-blue-200/70 bg-white/80 p-5 shadow-sm backdrop-blur-sm dark:border-blue-800/60 dark:bg-slate-900/70 md:p-6">
           <div className="mb-4 flex items-center justify-between">
             <button
               type="button"
@@ -486,6 +547,18 @@ export default function ProgressTracker() {
                       >
                         {entry.musclePart}
                       </p>
+
+                      {entry.imageUrl && (
+                        <span
+                          className={
+                            isSelected
+                              ? "text-blue-100"
+                              : "text-blue-600 dark:text-blue-300"
+                          }
+                        >
+                          Image added
+                        </span>
+                      )}
                     </div>
                   )}
                 </button>
@@ -539,11 +612,44 @@ export default function ProgressTracker() {
               </select>
             </label>
 
-            {selectedEntry && (
-              <div className="rounded-2xl border border-green-200 bg-green-50 p-4 text-sm text-green-800 dark:border-green-900 dark:bg-green-950/60 dark:text-green-200">
-                <p className="font-semibold">Saved entry</p>
-                <p className="mt-1">Weight: {selectedEntry.weight} kg</p>
-                <p>Muscle: {selectedEntry.musclePart}</p>
+            <label className="block">
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                Progress Image optional
+              </span>
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+
+                  if (!file) return;
+
+                  setImageFile(file);
+                  setImagePreview(URL.createObjectURL(file));
+                }}
+                className="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-blue-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+              />
+            </label>
+
+            {imagePreview && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+                <img
+                  src={imagePreview}
+                  alt="Progress preview"
+                  className="h-44 w-full rounded-xl object-cover"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImageFile(null);
+                    setImagePreview("");
+                  }}
+                  className="mt-3 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  Remove Image
+                </button>
               </div>
             )}
 

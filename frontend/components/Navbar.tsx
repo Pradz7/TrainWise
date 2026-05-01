@@ -106,14 +106,6 @@ export default function Navbar({ profile }: NavbarProps) {
         <div className="hidden items-center rounded-full border border-slate-200 bg-slate-50/80 p-1 dark:border-slate-700 dark:bg-slate-900/80 md:flex">
           <button
             type="button"
-            onClick={scrollToTop}
-            className="rounded-full bg-transparent px-4 py-2 text-sm font-medium text-slate-600 hover:bg-white hover:text-blue-600 hover:shadow-sm dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-300"
-          >
-            Dashboard
-          </button>
-
-          <button
-            type="button"
             onClick={() => scrollToSection("overview")}
             className="rounded-full bg-transparent px-4 py-2 text-sm font-medium text-slate-600 hover:bg-white hover:text-blue-600 hover:shadow-sm dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-300"
           >
@@ -122,18 +114,18 @@ export default function Navbar({ profile }: NavbarProps) {
 
           <button
             type="button"
-            onClick={() => scrollToSection("plans")}
-            className="rounded-full bg-transparent px-4 py-2 text-sm font-medium text-slate-600 hover:bg-white hover:text-blue-600 hover:shadow-sm dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-300"
-          >
-            Plans
-          </button>
-
-          <button
-            type="button"
             onClick={() => scrollToSection("tracker")}
             className="rounded-full bg-transparent px-4 py-2 text-sm font-medium text-slate-600 hover:bg-white hover:text-blue-600 hover:shadow-sm dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-300"
           >
             Tracker
+          </button>
+
+          <button
+            type="button"
+            onClick={() => scrollToSection("plans")}
+            className="rounded-full bg-transparent px-4 py-2 text-sm font-medium text-slate-600 hover:bg-white hover:text-blue-600 hover:shadow-sm dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-300"
+          >
+            Plans
           </button>
         </div>
 
@@ -179,16 +171,13 @@ export default function Navbar({ profile }: NavbarProps) {
                     Saved Plans
                   </Link>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      closeProfileMenu();
-                      scrollToSection("tracker");
-                    }}
-                    className="block w-full rounded-xl bg-transparent px-4 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white"
+                  <Link
+                    href="/log-history"
+                    onClick={closeProfileMenu}
+                    className="block rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white"
                   >
-                    Tracker
-                  </button>
+                    Log History
+                  </Link>
                 </div>
               </div>
             )}
